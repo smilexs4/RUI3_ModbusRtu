@@ -145,6 +145,15 @@ const unsigned char fctsupported[] =
 #define T35 5
 #define MAX_BUFFER 256 //!< maximum size for the communication buffer in bytes
 
+#define MODBUSRTU_BROADCAST 255
+
+enum ResultCode {
+	EX_CANCEL = 0xE6, // Custom. Transaction/request canceled
+	EX_PASSTHROUGH = 0xE7, // Custom. Raw callback. Indicate to normal processing on callback exit
+};
+
+typedef ResultCode (*cbRaw)(const uint8_t *frame, uint8_t len);
+
 /**
  * @class Modbus
  * @brief
@@ -168,6 +177,8 @@ private:
 	uint32_t u32time, u32timeOut, u32overTime;
 	uint8_t u8regsize;
 
+	cbRaw _cbRaw;
+
 	void sendTxBuffer();
 	int8_t getRxBuffer();
 	uint16_t calcCRC(uint8_t u8length);
@@ -186,6 +197,7 @@ private:
 public:
 	Modbus(uint8_t u8id, Stream &port, uint8_t u8txenpin = 0);
 
+	void onRaw(cbRaw cb);
 	void start();
 	void setTimeOut(uint16_t u16timeOut);		//!< write communication watch-dog timer
 	uint16_t getTimeOut();						//!< get communication watch-dog timer value

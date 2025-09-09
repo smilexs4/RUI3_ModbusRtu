@@ -125,6 +125,14 @@ Modbus::Modbus(uint8_t u8id, uint8_t u8serno, uint8_t u8txenpin)
 
 /**
  * @brief
+ * Sets up the raw frame handler callback.
+ *
+ * @ingroup setup
+ */
+void Modbus::onRaw(cbRaw cb) { _cbRaw = cb; }
+
+/**
+ * @brief
  * Start-up class object.
  *
  * Call this AFTER calling begin() on the serial port, typically within setup().
@@ -577,7 +585,7 @@ int8_t Modbus::poll(int16_t *regs, uint8_t u8size)
 	}
 
 	// check slave id
-	if (au8Buffer[ID] != u8id)
+	if (au8Buffer[ID] != u8id && u8id != MODBUSRTU_BROADCAST)
 	{
 		return 0;
 	}
@@ -585,7 +593,7 @@ int8_t Modbus::poll(int16_t *regs, uint8_t u8size)
 	uint8_t u8exception = validateRequest();
 	if (u8exception > 0)
 	{
-		if (u8exception != NO_REPLY)
+		if (u8exception != NO_REPLY && u8id != MODBUSRTU_BROADCAST)
 		{
 			buildException(u8exception);
 			sendTxBuffer();
@@ -596,6 +604,13 @@ int8_t Modbus::poll(int16_t *regs, uint8_t u8size)
 
 	u32timeOut = millis();
 	u8lastError = 0;
+
+	ResultCode res = EX_PASSTHROUGH;
+	if (_cbRaw) {
+		res = _cbRaw(au8Buffer, u8BufferSize);
+	}
+	if (res != EX_PASSTHROUGH)
+		return i8state;
 
 	// process message
 	switch (au8Buffer[FUNC])
