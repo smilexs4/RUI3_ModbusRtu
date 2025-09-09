@@ -136,7 +136,7 @@ Modbus::Modbus(uint8_t u8id, uint8_t u8serno, uint8_t u8txenpin)
  */
 void Modbus::start()
 {
-	if (u8txenpin > 1) // pin 0 & pin 1 are reserved for RX/TX
+	if (u8txenpin > 0) // pin 0 & pin 1 are reserved for RX/TX
 	{
 		// return RS485 transceiver to transmit mode
 		pinMode(u8txenpin, OUTPUT);
@@ -639,7 +639,7 @@ int8_t Modbus::getRxBuffer()
 {
 	boolean bBuffOverflow = false;
 
-	if (u8txenpin > 1)
+	if (u8txenpin > 0)
 		digitalWrite(u8txenpin, LOW);
 
 	u8BufferSize = 0;
@@ -682,7 +682,7 @@ void Modbus::sendTxBuffer()
 	au8Buffer[u8BufferSize] = u16crc & 0x00ff;
 	u8BufferSize++;
 
-	if (u8txenpin > 1)
+	if (u8txenpin > 0)
 	{
 		// set RS485 transceiver to transmit mode
 		digitalWrite(u8txenpin, HIGH);
@@ -693,7 +693,7 @@ void Modbus::sendTxBuffer()
 	port->flush();
 	port->read();
 
-	if (u8txenpin > 1)
+	if (u8txenpin > 0)
 	{
 		// must wait transmission end before changing pin state
 		// soft serial does not need it since it is blocking
